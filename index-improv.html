@@ -16,7 +16,7 @@
         background-size: cover;
         }
     </style>
-    <script type="module" src="https://www.improv-wifi.com/sdk-js/launch-button.js"></script>
+    <script type="module" src="https://unpkg.com/improv-wifi-serial-sdk@2.5.0/dist/web/serial-launch-button.js?module"></script>
 </head>
 <body>
 
@@ -29,9 +29,14 @@
 
     <div class="w3-center w3-padding-24" >
         <improv-wifi-serial-launch-button>
-          <button slot='activate' class="w3-button w3-blue w3-round-xxlarge w3-padding-large">Start provisioning!</button>
+          <button slot='activate' class="w3-button w3-blue w3-round-xxlarge w3-padding-large">Start provisioning! (via Serial)</button>
           <span slot='unsupported'>Your browser does not support provisioning.</span>
         </improv-wifi-serial-launch-button>
+        
+        <improv-wifi-launch-button>
+          <button slot='activate'>Start provisioning! (via BLE)</button>
+          <span slot='unsupported'>Your browser does not support provisioning.</span>
+        </improv-wifi-launch-button>
 
     </div>
 
