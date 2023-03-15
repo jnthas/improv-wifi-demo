@@ -125,11 +125,7 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
       //M5.Lcd.println("WIFI_SETTINGS");
 
       blinkled(100, 2);
-
-      //std::vector<std::string> infos = {"https://www.google.com"};
-      //std::vector<uint8_t> data1 = improv::build_rpc_response(improv::WIFI_SETTINGS, infos, false);
-      //send_response(data1);
-
+      
       ssid = cmd.ssid;
       password = cmd.password;
 
