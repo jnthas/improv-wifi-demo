@@ -8,9 +8,8 @@
 #define LED_BUILTIN 2
 
 //*** Web Server
-
-const char* ssid = "HUAWEI-5R42NS_HiLink";  // Enter your SSID here
-const char* password = "***";  //Enter your Password here
+std::string ssid = "";  
+std::string password = "";  
 
 WebServer server(80);  // Object of WebServer(HTTP port, 80 is defult)
 
@@ -26,8 +25,6 @@ String HTML = "<!DOCTYPE html>\
 //*** Improv
 uint8_t x_buffer[15]; //TODO: 15 is enough?
 uint8_t x_position = 0;
-
-
 
 
 void setup() {
@@ -99,7 +96,7 @@ void blinkled(int d, int times) {
 // *** Improv
 
 void onErrorCallback(improv::Error err) {
-  blinkled(100, 5);
+  blinkled(1000, 2);
   //M5.Lcd.println("Error");
   //M5.Lcd.println(err);
 }
@@ -111,8 +108,15 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
   switch (cmd.command) {
     case improv::Command::GET_CURRENT_STATE:
     {
-      //M5.Lcd.println("CUR_STATE");
-      set_state(improv::State::STATE_AUTHORIZED);
+
+      if (ssid.length() > 0 && password.length() > 0) {
+        //M5.Lcd.println("CUR_STATE");
+        set_state(improv::State::STATE_PROVISIONED);
+      } else {
+        //M5.Lcd.println("CUR_STATE");
+        set_state(improv::State::STATE_AUTHORIZED);
+      }
+      
       break;
     }
 
@@ -122,11 +126,27 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
 
       blinkled(100, 2);
 
-      std::vector<std::string> infos = {"https://www.google.com"};
-      std::vector<uint8_t> data1 = improv::build_rpc_response(improv::WIFI_SETTINGS, infos, false);
+      //std::vector<std::string> infos = {"https://www.google.com"};
+      //std::vector<uint8_t> data1 = improv::build_rpc_response(improv::WIFI_SETTINGS, infos, false);
       //send_response(data1);
 
+      ssid = cmd.ssid;
+      password = cmd.password;
+
       set_state(improv::STATE_PROVISIONING);
+
+      delay(1000);  // Try to connect to wifi here
+
+      // If connection was successful...
+
+      blinkled(100, 3);
+
+      set_state(improv::STATE_PROVISIONED);
+
+      std::vector<std::string> url = {"https://www.google.com"};
+      std::vector<uint8_t> data = improv::build_rpc_response(improv::WIFI_SETTINGS, url, false);
+      send_response(data);
+
       break;
     }
 
