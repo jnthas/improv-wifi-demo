@@ -139,7 +139,11 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
 
       set_state(improv::STATE_PROVISIONED);
 
-      std::vector<std::string> url = {"https://www.google.com"};
+      std::vector<std::string> url = {
+        // URL where user can finish onboarding or use device
+        // Recommended to use website hosted by device
+        "https://www.google.com"
+      };
       std::vector<uint8_t> data = improv::build_rpc_response(improv::WIFI_SETTINGS, url, false);
       send_response(data);
 
@@ -148,10 +152,16 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
 
     case improv::Command::GET_DEVICE_INFO:
     {
-      //M5.Lcd.println("DEV_INFO");
-      //ESPHome, 2021.11.0, ESP32-C3, Temperature Monitor.
-
-      std::vector<std::string> infos = {"ImprovWifiDemo", "1.0.0", "ESP32", "SimpleWebServer"};
+      std::vector<std::string> infos = {
+        // Firmware name
+        "ImprovWifiDemo",
+        // Firmware version
+        "1.0.0",
+        // Hardware chip/variant
+        "ESP32",
+        // Device name
+        "SimpleWebServer"
+      };
       std::vector<uint8_t> data = improv::build_rpc_response(improv::GET_DEVICE_INFO, infos, false);
       send_response(data);
       break;
