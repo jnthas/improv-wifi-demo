@@ -1,5 +1,6 @@
 # Improv Wi-Fi Demo
-Simple repo demonstrating Improv Wi-Fi capabilities
+
+This project demonstrates the use of <a href="https://www.improv-wifi.com/">Improv WiFi</a> via Serial communication. By clicking on the `Flash Firmware` button, the firmware of a simple webserver present in this repo will be installed in the ESP32 and the configuration to connect to the WiFi will be started. In case of the firmware is already present, you can change the WiFi settings without having to upload the firmware again.
 
 What do you need to test?
 - Just an ESP32 board connected on USB port
