@@ -1,29 +1,21 @@
-
 #include <WiFi.h>
-#include <WebServer.h>
 #include "improv.h"
-
 
 #define ARDUINO 1
 #define LED_BUILTIN 2
 
 //*** Web Server
-std::string ssid = "";  
-std::string password = "";  
+WiFiServer server(80);
 
-WebServer server(80);  // Object of WebServer(HTTP port, 80 is defult)
-
-// HTML & CSS contents which display on web server
-String HTML = "<!DOCTYPE html>\
-<html>\
-<body>\
-<h1>Hello, world!</h1>\
-</body>\
-</html>";
+// Client variables 
+char linebuf[80];
+int charcount=0;
 
 
 //*** Improv
-uint8_t x_buffer[15]; //TODO: 15 is enough?
+#define MAX_ATTEMPTS_WIFI_CONNECTION 20
+
+uint8_t x_buffer[16];
 uint8_t x_position = 0;
 
 
@@ -34,56 +26,67 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
 
-  //Blink 5 times means restarted
-  blinkled(100, 5);
-
-  // // Connect to your wi-fi modem
-  // WiFi.begin(ssid, password);
-
-  // // Check wi-fi is connected to wi-fi network
-  // while (WiFi.status() != WL_CONNECTED) {
-  // delay(1000);
-  // Serial.print(".");
-  // }
-  // Serial.println("");
-  // Serial.println("WiFi connected successfully");
-  // Serial.print("Got IP: ");
-  // Serial.println(WiFi.localIP());  //Show ESP32 IP on serial
-
-  // server.on("/", handle_root);
-
-  // server.begin();
-  // Serial.println("HTTP server started");
-  //delay(100); 
+  blink_led(100, 5); 
 }
 
 void loop() {
-  server.handleClient();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    handle_request();
+  }
 
   if (Serial.available() > 0) {
-    
     uint8_t b = Serial.read();
-    bool valid = parse_improv_serial_byte(x_position, b, x_buffer, onCommandCallback, onErrorCallback);
 
-    if (valid) {
-      x_buffer[x_position++] = b;
-      ////M5.Lcd.println("valid");
+    if (parse_improv_serial_byte(x_position, b, x_buffer, onCommandCallback, onErrorCallback)) {
+      x_buffer[x_position++] = b;      
     } else {
       x_position = 0;
-      ////M5.Lcd.println("invalid");
     }
-
-    
-    //M5.Lcd.print((char)b);
   }
 }
 
+
 // *** Web Server
-void handle_root() {
-  server.send(200, "text/html", HTML);
+void handle_request() {
+
+  WiFiClient client = server.available();
+  if (client) 
+  {
+    memset(linebuf,0,sizeof(linebuf));
+    charcount=0;
+    // an http request ends with a blank line
+    boolean currentLineIsBlank = true;
+    while (client.connected()) 
+    {
+      if (client.available()) 
+      {
+        char c = client.read();
+        //read char by char HTTP request
+        linebuf[charcount]=c;
+        if (charcount<sizeof(linebuf)-1) charcount++;
+
+        if (c == '\n' && currentLineIsBlank) 
+        {
+          // send a standard http response header
+          client.println("HTTP/1.1 200 OK");
+          client.println("Content-Type: text/html");
+          client.println("Connection: close");  // the connection will be closed after completion of the response
+          client.println();
+          client.println("<!DOCTYPE HTML><html><body>");
+          client.println("<h1>Welcome to SimpleWebServer</h1>");
+          client.println("<p>There is nothing here!</p>");
+          client.println("</body></html>");
+          break;
+        }
+      }
+    }
+    delay(1);
+    client.stop();
+  }  
 }
 
-void blinkled(int d, int times) {
+void blink_led(int d, int times) {
   for (int j=0; j<times; j++){
     digitalWrite(LED_BUILTIN, HIGH);
     delay(d);
@@ -93,27 +96,40 @@ void blinkled(int d, int times) {
   
 }
 
+bool connectWifi(std::string ssid, std::string password) {
+  uint8_t count = 0;
+
+  WiFi.begin(ssid.c_str(), password.c_str());
+
+  while (WiFi.status() != WL_CONNECTED) {
+    blink_led(500, 1);
+
+    if (count > MAX_ATTEMPTS_WIFI_CONNECTION) {
+      WiFi.disconnect();
+      set_error(improv::Error::ERROR_UNABLE_TO_CONNECT);
+      return false;
+    }
+    count++;
+  }
+
+  return true;
+}
+
+
 // *** Improv
 
 void onErrorCallback(improv::Error err) {
-  blinkled(1000, 2);
-  //M5.Lcd.println("Error");
-  //M5.Lcd.println(err);
+  blink_led(2000, 3);
 }
 
 bool onCommandCallback(improv::ImprovCommand cmd) {
-  //M5.Lcd.println("Command");
-  //M5.Lcd.println(cmd.command);
 
   switch (cmd.command) {
     case improv::Command::GET_CURRENT_STATE:
     {
-
-      if (ssid.length() > 0 && password.length() > 0) {
-        //M5.Lcd.println("CUR_STATE");
+      if ((WiFi.status() == WL_CONNECTED)) {
         set_state(improv::State::STATE_PROVISIONED);
       } else {
-        //M5.Lcd.println("CUR_STATE");
         set_state(improv::State::STATE_AUTHORIZED);
       }
       
@@ -122,35 +138,30 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
 
     case improv::Command::WIFI_SETTINGS:
     {
-      //M5.Lcd.println("WIFI_SETTINGS");
-
-      blinkled(100, 2);
+      if (cmd.ssid.length() == 0) {
+        set_error(improv::Error::ERROR_INVALID_RPC);
+        break;
+      }
       
-      ssid = cmd.ssid;
-      password = cmd.password;
-
       set_state(improv::STATE_PROVISIONING);
+      
+      if (connectWifi(cmd.ssid, cmd.password)) {
 
-      delay(1000);  // Try to connect to wifi here
+        blink_led(100, 3);
 
-      // If connection was successful...
+        set_state(improv::STATE_PROVISIONED);
+        std::vector<std::string> url = {String("http://" + WiFi.localIP().toString()).c_str()};
+        std::vector<uint8_t> data = improv::build_rpc_response(improv::WIFI_SETTINGS, url, false);
+        send_response(data);        
+        server.begin();
 
-      blinkled(100, 3);
-
-      set_state(improv::STATE_PROVISIONED);
-
-      std::vector<std::string> url = {"https://www.google.com"};
-      std::vector<uint8_t> data = improv::build_rpc_response(improv::WIFI_SETTINGS, url, false);
-      send_response(data);
-
+      }
+      
       break;
     }
 
     case improv::Command::GET_DEVICE_INFO:
     {
-      //M5.Lcd.println("DEV_INFO");
-      //ESPHome, 2021.11.0, ESP32-C3, Temperature Monitor.
-
       std::vector<std::string> infos = {"ImprovWifiDemo", "1.0.0", "ESP32", "SimpleWebServer"};
       std::vector<uint8_t> data = improv::build_rpc_response(improv::GET_DEVICE_INFO, infos, false);
       send_response(data);
@@ -159,29 +170,22 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
 
     case improv::Command::GET_WIFI_NETWORKS:
     {
-      //M5.Lcd.println("WIFI_NET");
-      //MyWirelessNetwork, -60, YES.
-      getNetworks();
+      getAvailableWifiNetworks();
       break;
     }
 
     default: {
-      //M5.Lcd.println("Unknown Improv payload");
       set_error(improv::ERROR_UNKNOWN_RPC);
       return false;
     }
-      
-
   }
-
 
   return true;
 }
 
 
-void getNetworks() {
+void getAvailableWifiNetworks() {
   int networkNum = WiFi.scanNetworks();
-  ////M5.Lcd.println("Found " + networkNum);
 
   for (int id = 0; id < networkNum; ++id) { 
     std::vector<uint8_t> data = improv::build_rpc_response(
@@ -244,9 +248,3 @@ void set_error(improv::Error error) {
 
   Serial.write(data.data(), data.size());
 }
-
-
-
-
-
-
