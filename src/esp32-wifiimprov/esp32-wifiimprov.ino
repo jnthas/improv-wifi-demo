@@ -180,7 +180,7 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
     {
       std::vector<std::string> infos = {
         // Firmware name
-        "ImprovWifiDemo",
+        "ImprovWiFiDemo",
         // Firmware version
         "1.0.0",
         // Hardware chip/variant
