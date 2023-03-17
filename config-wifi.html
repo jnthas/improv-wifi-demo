@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Improv Wi-Fi Demo</title>
+    <title>Improv Wifi Demo - Config Wifi</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -10,13 +10,17 @@
         body,h1 {font-family: "Raleway", sans-serif}
         body, html {height: 100%}
         .bgimg {
-        background-image: url('bg.jpg');
-        min-height: 100%;
-        background-position: center;
-        background-size: cover;
+            background-image: url('bg.jpg');
+            
+            min-height: 100%;
+            background-position: center;
+            background-size: cover;
+        }
+        img {
+            filter: grayscale(100%);
         }
     </style>
-    <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
+    <script type="module" src="https://unpkg.com/improv-wifi-serial-sdk@2.5.0/dist/web/serial-launch-button.js?module"></script>
 </head>
 <body>
 
@@ -25,15 +29,16 @@
     <a class="w3-button w3-transparent w3-border" href="https://github.com/jnthas/improv-wifi-demo">@JNTHAS</a>
   </div>
   <div class="w3-display-middle">
-    <h1 class="w3-jumbo w3-animate-top">ESP32 Improv Wi-Fi Demo</h1>
+    <h1 class="w3-jumbo w3-animate-top">ESP32 Improv Wi-fi Demo</h1>
     <h4 class="w3-center">Via Serial</h4>
 
     <div class="w3-center w3-padding-24">
-        <esp-web-install-button manifest="firmware/manifest.json">
-            <button slot="activate" class="w3-button w3-yellow w3-round-xxlarge w3-padding-large">Flash Firmware</button>
-            <span slot="unsupported">Ah snap, your browser doesn't work!</span>
-            <span slot="not-allowed">Ah snap, you are not allowed to use this on HTTP!</span>
-        </esp-web-install-button>
+        <p>Use the following button to just configure wifi without flashing</p>
+        <improv-wifi-serial-launch-button>
+          <button slot='activate' class="w3-button w3-blue w3-round-xxlarge w3-padding-large">Configure Wifi</button>
+          <span slot='unsupported'>Your browser does not support provisioning.</span>
+        </improv-wifi-serial-launch-button>
+
     </div>
 
     <hr class="w3-border-grey" style="margin:auto;width:40%">

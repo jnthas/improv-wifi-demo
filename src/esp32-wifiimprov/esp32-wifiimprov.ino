@@ -150,7 +150,11 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
         blink_led(100, 3);
 
         set_state(improv::STATE_PROVISIONED);
-        std::vector<std::string> url = {String("http://" + WiFi.localIP().toString()).c_str()};
+        std::vector<std::string> url = {
+          // URL where user can finish onboarding or use device
+          // Recommended to use website hosted by device
+          String("http://" + WiFi.localIP().toString()).c_str()
+        };
         std::vector<uint8_t> data = improv::build_rpc_response(improv::WIFI_SETTINGS, url, false);
         send_response(data);        
         server.begin();
@@ -162,7 +166,16 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
 
     case improv::Command::GET_DEVICE_INFO:
     {
-      std::vector<std::string> infos = {"ImprovWifiDemo", "1.0.0", "ESP32", "SimpleWebServer"};
+      std::vector<std::string> infos = {
+        // Firmware name
+        "ImprovWifiDemo",
+        // Firmware version
+        "1.0.0",
+        // Hardware chip/variant
+        "ESP32",
+        // Device name
+        "SimpleWebServer"
+      };
       std::vector<uint8_t> data = improv::build_rpc_response(improv::GET_DEVICE_INFO, infos, false);
       send_response(data);
       break;
