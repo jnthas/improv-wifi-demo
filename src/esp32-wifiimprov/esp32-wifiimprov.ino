@@ -25,6 +25,8 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
+  
+  //TODO: Try to connect here if credentials are available
 
   blink_led(100, 5); 
 }
@@ -106,7 +108,6 @@ bool connectWifi(std::string ssid, std::string password) {
 
     if (count > MAX_ATTEMPTS_WIFI_CONNECTION) {
       WiFi.disconnect();
-      set_error(improv::Error::ERROR_UNABLE_TO_CONNECT);
       return false;
     }
     count++;
@@ -142,12 +143,14 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
         set_error(improv::Error::ERROR_INVALID_RPC);
         break;
       }
-      
+     
       set_state(improv::STATE_PROVISIONING);
       
       if (connectWifi(cmd.ssid, cmd.password)) {
 
         blink_led(100, 3);
+        
+        //TODO: Persist credentials here
 
         set_state(improv::STATE_PROVISIONED);
         std::vector<std::string> url = {
@@ -159,6 +162,9 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
         send_response(data);        
         server.begin();
 
+      } else {
+        set_state(improv::STATE_STOPPED);
+        set_error(improv::Error::ERROR_UNABLE_TO_CONNECT);
       }
       
       break;
