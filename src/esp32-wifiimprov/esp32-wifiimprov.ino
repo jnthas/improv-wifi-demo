@@ -119,6 +119,14 @@ bool connectWifi(std::string ssid, std::string password) {
 
 // *** Improv
 
+std::vector<std::string> getLocalUrl() {
+  return {
+    // URL where user can finish onboarding or use device
+    // Recommended to use website hosted by device
+    String("http://" + WiFi.localIP().toString()).c_str()
+  };
+}
+
 void onErrorCallback(improv::Error err) {
   blink_led(2000, 3);
 }
@@ -130,6 +138,9 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
     {
       if ((WiFi.status() == WL_CONNECTED)) {
         set_state(improv::State::STATE_PROVISIONED);
+        std::vector<uint8_t> data = improv::build_rpc_response(improv::GET_CURRENT_STATE, getLocalUrl(), false);
+        send_response(data);
+
       } else {
         set_state(improv::State::STATE_AUTHORIZED);
       }
@@ -152,14 +163,9 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
         
         //TODO: Persist credentials here
 
-        set_state(improv::STATE_PROVISIONED);
-        std::vector<std::string> url = {
-          // URL where user can finish onboarding or use device
-          // Recommended to use website hosted by device
-          String("http://" + WiFi.localIP().toString()).c_str()
-        };
-        std::vector<uint8_t> data = improv::build_rpc_response(improv::WIFI_SETTINGS, url, false);
-        send_response(data);        
+        set_state(improv::STATE_PROVISIONED);        
+        std::vector<uint8_t> data = improv::build_rpc_response(improv::WIFI_SETTINGS, getLocalUrl(), false);
+        send_response(data);
         server.begin();
 
       } else {
@@ -201,6 +207,7 @@ bool onCommandCallback(improv::ImprovCommand cmd) {
 
   return true;
 }
+
 
 
 void getAvailableWifiNetworks() {
