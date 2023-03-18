@@ -1,4 +1,5 @@
 #include <WiFi.h>
+#include <Esp.h>
 #include "improv.h"
 
 #define ARDUINO 1
@@ -70,14 +71,29 @@ void handle_request() {
 
         if (c == '\n' && currentLineIsBlank) 
         {
-          // send a standard http response header
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
           client.println("Connection: close");  // the connection will be closed after completion of the response
           client.println();
           client.println("<!DOCTYPE HTML><html><body>");
-          client.println("<h1>Welcome to SimpleWebServer</h1>");
-          client.println("<p>There is nothing here!</p>");
+          client.println("<h1>Welcome! </h1>");
+          client.println("<p>This is a simple webpage served by your ESP32</p>");
+          client.println("<h3>Chip Info</h3>");
+          client.println("<ul><li>Model:");
+          client.println(ESP.getChipModel());
+          client.println("</li><li>Cores: ");
+          client.println(ESP.getChipCores());
+          client.println("</li><li>Revision: ");
+          client.println(ESP.getChipRevision());
+          client.println("</li></ul>");
+          client.println("<h3>Network Info</h3>");
+          client.println("<ul><li>SSID: ");
+          client.println(WiFi.SSID());
+          client.println("</li><li>IP Address: ");
+          client.println(WiFi.localIP());
+          client.println("</li><li>MAC Address: ");
+          client.println(WiFi.macAddress());
+          client.println("</li></ul>");          
           client.println("</body></html>");
           break;
         }
